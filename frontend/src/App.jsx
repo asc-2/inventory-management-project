@@ -8,6 +8,10 @@ function App() {
   const [price, setPrice] = useState("")
   const [category, setCategory] = useState("")
   const [editingId, setEditingId] = useState(null)
+  const [searchName, setSearchName] = useState("")
+  const [searchCategory, setSearchCategory] = useState("")
+  const [sortField, setSortField] = useState(null)
+  const [sortDirection, setSortDirection] = useState("asc") 
 
   const fetchItems = () => {
     fetch("http://127.0.0.1:8000/items")
@@ -73,11 +77,75 @@ function App() {
     setEditingId(null)
 
     fetchItems()
-}
+  } 
+
+  const handleSearch = async (event) => {
+    event.preventDefault()
+
+    const params = new URLSearchParams()
+
+    if (searchName) {
+      params.append("name", searchName)
+    }
+
+    if (searchCategory) {
+      params.append("category", searchCategory)
+    }
+
+    const response = await fetch(`http://127.0.0.1:8000/items/search?${params}`)
+    const data = await response.json()
+
+    setItems(data)
+  }
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setSortField(field)
+      setSortDirection("asc")
+    }
+  }
+  
+  const sortedItems = [...items].sort((a, b) => {
+    if (!sortField) {
+      return 0
+    }
+
+    const aValue = a[sortField]
+    const bValue = b[sortField]
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortDirection === "asc"
+        ? aValue - bValue
+        : bValue - aValue
+    }
+
+    return sortDirection === "asc"
+      ? String(aValue).localeCompare(String(bValue))
+      : String(bValue).localeCompare(String(aValue))
+  })
 
   return (
     <div>
       <h1>Inventory Management</h1>
+
+      <form onSubmit={handleSearch}>
+        <input
+          placeholder="Search by name"
+          value={searchName}
+          onChange={(e) => setSearchName(e.target.value)}
+        />
+
+        <input
+          placeholder="Search by category"
+          value={searchCategory}
+          onChange={(e) => setSearchCategory(e.target.value)}
+        />
+
+        <button type="submit">Search</button>
+        <button type="button" onClick={fetchItems}>Clear</button>
+      </form>
 
       <form onSubmit={handleSubmit}>
         <input
@@ -115,17 +183,17 @@ function App() {
       <table border="1" cellPadding="8">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Category</th>
+            <th onClick={() => handleSort("id")}>ID</th>
+            <th onClick={() => handleSort("name")}>Name</th>
+            <th onClick={() => handleSort("quantity")}>Quantity</th>
+            <th onClick={() => handleSort("price")}>Price</th>
+            <th onClick={() => handleSort("category")}>Category</th>
             <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          {items.map((item) => (
+          {sortedItems.map((item) => (
             <tr key={item.id}>
               <td>{item.id}</td>
               <td>{item.name}</td>
