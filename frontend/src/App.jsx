@@ -11,17 +11,29 @@ function App() {
   const [searchName, setSearchName] = useState("")
   const [searchCategory, setSearchCategory] = useState("")
   const [sortField, setSortField] = useState(null)
-  const [sortDirection, setSortDirection] = useState("asc") 
+  const [sortDirection, setSortDirection] = useState("asc")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const fetchItems = () => {
-    fetch("http://127.0.0.1:8000/items")
-      .then((response) => response.json())
-      .then((data) => {
-        setItems(data)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
+  const fetchItems = async () => {
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/items")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch items")
+      }
+
+      const data = await response.json()
+      setItems(data)
+    } catch (error) {
+      console.error(error)
+      setError("Could not load inventory items.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -29,11 +41,22 @@ function App() {
   }, [])
 
   const handleDelete = async (id) => {
-    await fetch(`http://127.0.0.1:8000/items/${id}`, {
-      method: "DELETE",
-    })
+    setError("")
 
-    fetchItems()
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/items/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete item")
+      }
+
+      fetchItems()
+    } catch (error) {
+      console.error(error)
+      setError("Could not delete item.")
+    }
   }
   const handleEdit = (item) => {
     setEditingId(item.id)
@@ -44,6 +67,7 @@ function App() {
   }
   const handleSubmit = async (event) => {
     event.preventDefault()
+    setError("")
 
     const itemData = {
       name,
@@ -52,35 +76,48 @@ function App() {
       category,
     }
 
-    if (editingId) {
-      await fetch(`http://127.0.0.1:8000/items/${editingId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(itemData),
-      })
-    } else {
-      await fetch("http://127.0.0.1:8000/items", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(itemData),
-      })
+    try {
+      let response
+
+      if (editingId) {
+        response = await fetch(`http://127.0.0.1:8000/items/${editingId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(itemData),
+        })
+      } else {
+        response = await fetch("http://127.0.0.1:8000/items", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(itemData),
+        })
+      }
+
+      if (!response.ok) {
+        throw new Error("Failed to save item")
+      }
+
+      setName("")
+      setQuantity("")
+      setPrice("")
+      setCategory("")
+      setEditingId(null)
+
+      fetchItems()
+    } catch (error) {
+      console.error(error)
+      setError("Could not save item. Check that all fields are valid.")
     }
-
-    setName("")
-    setQuantity("")
-    setPrice("")
-    setCategory("")
-    setEditingId(null)
-
-    fetchItems()
   } 
 
   const handleSearch = async (event) => {
     event.preventDefault()
+    setLoading(true)
+    setError("")
 
     const params = new URLSearchParams()
 
@@ -92,10 +129,35 @@ function App() {
       params.append("category", searchCategory)
     }
 
-    const response = await fetch(`http://127.0.0.1:8000/items/search?${params}`)
-    const data = await response.json()
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/items/search?${params}`)
 
-    setItems(data)
+      if (!response.ok) {
+        throw new Error("Failed to search items")
+      }
+
+      const data = await response.json()
+      setItems(data)
+    } catch (error) {
+      console.error(error)
+      setError("Could not search inventory items.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleClearSearch = () => {
+    setSearchName("")
+    setSearchCategory("")
+    fetchItems()
+  }
+
+  const handleCancelEdit = () => {
+    setName("")
+    setQuantity("")
+    setPrice("")
+    setCategory("")
+    setEditingId(null)
   }
 
   const handleSort = (field) => {
@@ -130,6 +192,9 @@ function App() {
     <div>
       <h1>Inventory Management</h1>
 
+      {error && <p>{error}</p>}
+      {loading && <p>Loading...</p>}
+
       <form onSubmit={handleSearch}>
         <input
           placeholder="Search by name"
@@ -144,7 +209,7 @@ function App() {
         />
 
         <button type="submit">Search</button>
-        <button type="button" onClick={fetchItems}>Clear</button>
+        <button type="button" onClick={handleClearSearch}>Clear</button>
       </form>
 
       <form onSubmit={handleSubmit}>
@@ -178,6 +243,12 @@ function App() {
         <button type="submit">
           {editingId ? "Update Item" : "Add Item"}
         </button>
+
+        {editingId && (
+          <button type="button" onClick={handleCancelEdit}>
+            Cancel Edit
+          </button>
+        )}
       </form>
 
       <table border="1" cellPadding="8">
@@ -193,6 +264,12 @@ function App() {
         </thead>
 
         <tbody>
+          {!loading && sortedItems.length === 0 && (
+            <tr>
+              <td colSpan="6">No items found.</td>
+            </tr>
+          )}
+
           {sortedItems.map((item) => (
             <tr key={item.id}>
               <td>{item.id}</td>
