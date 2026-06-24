@@ -14,6 +14,14 @@ function App() {
       })
   }, [])
 
+const handleDelete = async (id) => {
+  await fetch(`http://127.0.0.1:8000/items/${id}`, {
+    method: "DELETE",
+  })
+
+  fetchItems()
+}
+
   return (
     <div>
       <h1>Inventory Management</h1>
@@ -26,6 +34,7 @@ function App() {
             <th>Quantity</th>
             <th>Price</th>
             <th>Category</th>
+            <th>Actions</th>
           </tr>
         </thead>
 
@@ -37,6 +46,11 @@ function App() {
               <td>{item.quantity}</td>
               <td>${item.price}</td>
               <td>{item.category}</td>
+              <td>
+                <button onClick={() => handleDelete(item.id)}>
+                  Delete
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
