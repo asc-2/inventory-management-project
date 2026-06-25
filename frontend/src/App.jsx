@@ -227,19 +227,6 @@ function App() {
   return counts
 }, {})
 
-  {lowStockItems.length > 0 && (
-    <section>
-      <h2>Low Stock Alerts</h2>
-
-      <ul>
-        {lowStockItems.map((item) => (
-          <li key={item.id}>
-            {item.name} is low on stock: {item.quantity} remaining
-          </li>
-        ))}
-      </ul>
-    </section>
-  )}
 
   return (
     <div>
@@ -253,6 +240,20 @@ function App() {
         <p>Total units in stock: {totalUnits}</p>
         <p>Total inventory value: ${totalValue.toFixed(2)}</p>
       </section>
+
+      {lowStockItems.length > 0 && (
+        <section>
+          <h2>Low Stock Alerts</h2>
+
+          <ul>
+            {lowStockItems.map((item) => (
+              <li key={item.id}>
+                {item.name} is low on stock: {item.quantity} remaining
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
 
