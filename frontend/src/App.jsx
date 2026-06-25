@@ -216,6 +216,17 @@ function App() {
   const lowStockItems = items.filter(
   (item) => item.quantity <= LOW_STOCK_THRESHOLD
 )
+
+  const categoryCounts = items.reduce((counts, item) => {
+    if (counts[item.category]) {
+      counts[item.category]++
+    } else {
+      counts[item.category] = 1
+    }
+
+  return counts
+}, {})
+
   {lowStockItems.length > 0 && (
     <section>
       <h2>Low Stock Alerts</h2>
@@ -241,6 +252,26 @@ function App() {
         <p>Total item types: {totalItems}</p>
         <p>Total units in stock: {totalUnits}</p>
         <p>Total inventory value: ${totalValue.toFixed(2)}</p>
+      </section>
+
+      <section>
+
+        <h2>Inventory by Category</h2>
+
+        <ul>
+
+          {Object.entries(categoryCounts).map(([category, count]) => (
+
+            <li key={category}>
+
+              {category}: {count} item{count !== 1 ? "s" : ""}
+
+            </li>
+
+          ))}
+
+        </ul>
+
       </section>
 
       <form onSubmit={handleSearch}>
