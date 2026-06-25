@@ -182,3 +182,8 @@
     border-right-color: var(--border);
   }
 }
+
+.low-stock {
+    background-color:#ffcbcf;
+    font-weight: bold;
+}

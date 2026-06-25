@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react"
+import "./App.css"
+
+const API_URL = "http://127.0.0.1:8000"
+const LOW_STOCK_THRESHOLD = 5
 
 function App() {
   const [items, setItems] = useState([])
@@ -20,7 +24,7 @@ function App() {
     setError("")
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/items")
+      const response = await fetch(`${API_URL}/items`)
 
       if (!response.ok) {
         throw new Error("Failed to fetch items")
@@ -44,7 +48,7 @@ function App() {
     setError("")
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/items/${id}`, {
+      const response = await fetch(`${API_URL}/items/${id}`, {
         method: "DELETE",
       })
 
@@ -69,18 +73,28 @@ function App() {
     event.preventDefault()
     setError("")
 
+    if (!name.trim() || !quantity || !price || !category.trim()) {
+      setError("Please fill out all item fields.")
+      return
+    }
+
+    if (Number(quantity) < 0 || Number(price) < 0) {
+      setError("Quantity and price cannot be negative.")
+      return
+    }
+
     const itemData = {
-      name,
+      name: name.trim(),
       quantity: Number(quantity),
       price: Number(price),
-      category,
+      category: category.trim(),
     }
 
     try {
       let response
 
       if (editingId) {
-        response = await fetch(`http://127.0.0.1:8000/items/${editingId}`, {
+        response = await fetch(`${API_URL}/items/${editingId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -88,7 +102,7 @@ function App() {
           body: JSON.stringify(itemData),
         })
       } else {
-        response = await fetch("http://127.0.0.1:8000/items", {
+        response = await fetch(`${API_URL}/items`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -130,7 +144,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/items/search?${params}`)
+      const response = await fetch(`${API_URL}/items/search?${params}`)
 
       if (!response.ok) {
         throw new Error("Failed to search items")
@@ -168,6 +182,14 @@ function App() {
       setSortDirection("asc")
     }
   }
+
+  const getSortLabel = (field, label) => {
+    if (sortField !== field) {
+      return label
+    }
+
+    return `${label} ${sortDirection === "asc" ? "↑" : "↓"}`
+  }
   
   const sortedItems = [...items].sort((a, b) => {
     if (!sortField) {
@@ -188,12 +210,38 @@ function App() {
       : String(bValue).localeCompare(String(aValue))
   })
 
+  const totalItems = items.length
+  const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0)
+  const totalValue = items.reduce( (sum, item) => sum + item.quantity * item.price, 0)
+  const lowStockItems = items.filter(
+  (item) => item.quantity <= LOW_STOCK_THRESHOLD
+)
+  {lowStockItems.length > 0 && (
+    <section>
+      <h2>Low Stock Alerts</h2>
+
+      <ul>
+        {lowStockItems.map((item) => (
+          <li key={item.id}>
+            {item.name} is low on stock: {item.quantity} remaining
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
   return (
     <div>
       <h1>Inventory Management</h1>
 
       {error && <p>{error}</p>}
       {loading && <p>Loading...</p>}
+
+      <section>
+        <p>Total item types: {totalItems}</p>
+        <p>Total units in stock: {totalUnits}</p>
+        <p>Total inventory value: ${totalValue.toFixed(2)}</p>
+      </section>
 
       <form onSubmit={handleSearch}>
         <input
@@ -254,11 +302,11 @@ function App() {
       <table border="1" cellPadding="8">
         <thead>
           <tr>
-            <th onClick={() => handleSort("id")}>ID</th>
-            <th onClick={() => handleSort("name")}>Name</th>
-            <th onClick={() => handleSort("quantity")}>Quantity</th>
-            <th onClick={() => handleSort("price")}>Price</th>
-            <th onClick={() => handleSort("category")}>Category</th>
+            <th onClick={() => handleSort("id")}>{getSortLabel("id", "ID")}</th>
+            <th onClick={() => handleSort("name")}>{getSortLabel("name", "Name")}</th>
+            <th onClick={() => handleSort("quantity")}>{getSortLabel("quantity", "Quantity")}</th>
+            <th onClick={() => handleSort("price")}>{getSortLabel("price", "Price")}</th>
+            <th onClick={() => handleSort("category")}>{getSortLabel("category", "Category")}</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -274,7 +322,15 @@ function App() {
             <tr key={item.id}>
               <td>{item.id}</td>
               <td>{item.name}</td>
-              <td>{item.quantity}</td>
+              <td
+                className={
+                  item.quantity <= LOW_STOCK_THRESHOLD
+                    ? "low-stock"
+                    : ""
+                }
+              >
+                {item.quantity}
+              </td>
               <td>${item.price}</td>
               <td>{item.category}</td>
               <td>
