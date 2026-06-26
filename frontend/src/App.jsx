@@ -11,6 +11,7 @@ function App() {
   const [quantity, setQuantity] = useState("")
   const [price, setPrice] = useState("")
   const [category, setCategory] = useState("")
+  const [supplier, setSupplier] = useState("")
   const [editingId, setEditingId] = useState(null)
   const [searchName, setSearchName] = useState("")
   const [searchCategory, setSearchCategory] = useState("")
@@ -68,12 +69,13 @@ function App() {
     setQuantity(item.quantity)
     setPrice(item.price)
     setCategory(item.category)
+    setSupplier(item.supplier)
   }
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError("")
 
-    if (!name.trim() || !quantity || !price || !category.trim()) {
+    if (!name.trim() || !quantity || !price || !category.trim() || !supplier.trim()) {
       setError("Please fill out all item fields.")
       return
     }
@@ -88,6 +90,7 @@ function App() {
       quantity: Number(quantity),
       price: Number(price),
       category: category.trim(),
+      supplier: supplier.trim(),
     }
 
     try {
@@ -119,6 +122,7 @@ function App() {
       setQuantity("")
       setPrice("")
       setCategory("")
+      setSupplier("")
       setEditingId(null)
 
       fetchItems()
@@ -171,6 +175,7 @@ function App() {
     setQuantity("")
     setPrice("")
     setCategory("")
+    setSupplier("")
     setEditingId(null)
   }
 
@@ -320,6 +325,12 @@ function App() {
           onChange={(e) => setCategory(e.target.value)}
         />
 
+        <input
+          placeholder="Supplier"
+          value={supplier}
+          onChange={(e) => setSupplier(e.target.value)}
+        />
+
         <button type="submit">
           {editingId ? "Update Item" : "Add Item"}
         </button>
@@ -339,6 +350,7 @@ function App() {
             <th onClick={() => handleSort("quantity")}>{getSortLabel("quantity", "Quantity")}</th>
             <th onClick={() => handleSort("price")}>{getSortLabel("price", "Price")}</th>
             <th onClick={() => handleSort("category")}>{getSortLabel("category", "Category")}</th>
+            <th onClick={() => handleSort("supplier")}>{getSortLabel("supplier", "Supplier")}</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -346,7 +358,7 @@ function App() {
         <tbody>
           {!loading && sortedItems.length === 0 && (
             <tr>
-              <td colSpan="6">No items found.</td>
+              <td colSpan="7">No items found.</td>
             </tr>
           )}
 
@@ -365,6 +377,7 @@ function App() {
               </td>
               <td>${item.price}</td>
               <td>{item.category}</td>
+              <td>{item.supplier}</td>
               <td>
                 <button onClick={() => handleEdit(item)}>
                   Edit
