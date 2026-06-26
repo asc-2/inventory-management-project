@@ -42,6 +42,10 @@ class InventoryTransactionCreate(InventoryTransactionBase):
     quantity_delta: int
 
 
+class InventoryTransactionUpdate(BaseModel):
+    note: str | None = None
+
+
 class InventoryTransactionResponse(InventoryTransactionBase):
     id: int
     item_id: int

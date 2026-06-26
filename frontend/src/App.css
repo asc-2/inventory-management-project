@@ -239,3 +239,16 @@
   gap: 12px;
   margin-top: 12px;
 }
+
+.transaction-note-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.transaction-note-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}

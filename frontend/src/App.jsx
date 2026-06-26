@@ -4,9 +4,15 @@ import "./App.css"
 const API_URL = "http://127.0.0.1:8000"
 const LOW_STOCK_THRESHOLD = 5
 const HISTORY_PAGE_SIZE = 5
+const DEFAULT_MOVEMENT_REASONS = {
+  stock_in: ["Restock", "Purchase", "Returned"],
+  stock_out: ["Sale", "Returned", "Stolen/Broken"],
+  adjustment: ["Count correction", "Returned", "Stolen/Broken"],
+}
 
 function App() {
   const [items, setItems] = useState([])
+  const [supplierOptions, setSupplierOptions] = useState([])
   const [selectedItem, setSelectedItem] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -18,6 +24,9 @@ function App() {
   const [stockAmount, setStockAmount] = useState("")
   const [stockNote, setStockNote] = useState("")
   const [stockLoading, setStockLoading] = useState(false)
+  const [editingTransactionId, setEditingTransactionId] = useState(null)
+  const [editingTransactionNote, setEditingTransactionNote] = useState("")
+  const [transactionSaving, setTransactionSaving] = useState(false)
 
   const [name, setName] = useState("")
   const [quantity, setQuantity] = useState("")
@@ -53,8 +62,24 @@ function App() {
     }
   }
 
+  const fetchSupplierOptions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/items/suppliers`)
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch suppliers")
+      }
+
+      const data = await response.json()
+      setSupplierOptions(data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   useEffect(() => {
     fetchItems()
+    fetchSupplierOptions()
   }, [])
 
   const fetchTransactions = async (item, options = {}) => {
@@ -64,6 +89,8 @@ function App() {
     setSelectedItem(item)
     setHistoryLoading(true)
     setHistoryError("")
+    setEditingTransactionId(null)
+    setEditingTransactionNote("")
 
     try {
       const params = new URLSearchParams({
@@ -114,6 +141,7 @@ function App() {
       }
 
       fetchItems()
+      fetchSupplierOptions()
     } catch (error) {
       console.error(error)
       setError("Could not delete item.")
@@ -132,6 +160,8 @@ function App() {
     setStockAction("stock_in")
     setStockAmount("")
     setStockNote("")
+    setEditingTransactionId(null)
+    setEditingTransactionNote("")
     await fetchTransactions(item, { page: 0, typeFilter: "all" })
   }
 
@@ -211,6 +241,7 @@ function App() {
       setEditingId(null)
 
       await fetchItems()
+      await fetchSupplierOptions()
 
       if (selectedItem && selectedItem.id === editingId) {
         await fetchTransactions(savedItem)
@@ -290,6 +321,7 @@ function App() {
       setStockAmount("")
       setStockNote("")
       await fetchItems()
+      await fetchSupplierOptions()
       await fetchTransactions(updatedSelectedItem, {
         page: 0,
         typeFilter: historyTypeFilter,
@@ -400,6 +432,71 @@ function App() {
       typeFilter: historyTypeFilter,
     })
   }
+
+  const handleEditTransaction = (transaction) => {
+    setEditingTransactionId(transaction.id)
+    setEditingTransactionNote(transaction.note || "")
+  }
+
+  const handleCancelTransactionEdit = () => {
+    setEditingTransactionId(null)
+    setEditingTransactionNote("")
+  }
+
+  const handleSaveTransactionNote = async (transaction) => {
+    if (!selectedItem) {
+      return
+    }
+
+    setError("")
+    setTransactionSaving(true)
+
+    try {
+      const response = await fetch(
+        `${API_URL}/items/${selectedItem.id}/transactions/${transaction.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            note: editingTransactionNote.trim() || null,
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        let message = "Failed to update transaction note"
+
+        try {
+          const errorData = await response.json()
+          if (typeof errorData.detail === "string") {
+            message = errorData.detail
+          }
+        } catch {
+          // Keep fallback error.
+        }
+
+        throw new Error(message)
+      }
+
+      const updatedTransaction = await response.json()
+      setTransactions((currentTransactions) =>
+        currentTransactions.map((currentTransaction) =>
+          currentTransaction.id === updatedTransaction.id
+            ? updatedTransaction
+            : currentTransaction
+        )
+      )
+      setEditingTransactionId(null)
+      setEditingTransactionNote("")
+    } catch (error) {
+      console.error(error)
+      setError(error.message || "Could not update transaction note.")
+    } finally {
+      setTransactionSaving(false)
+    }
+  }
   
   const sortedItems = [...items].sort((a, b) => {
     if (!sortField) {
@@ -446,6 +543,27 @@ function App() {
 
     return counts
   }, {})
+
+  const historicalReasonOptions = [...new Set(
+    transactions
+      .map((transaction) => transaction.note?.trim())
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b))
+
+  const movementReasonOptions = [...new Set([
+    ...(DEFAULT_MOVEMENT_REASONS[stockAction] || []),
+    ...historicalReasonOptions,
+  ])]
+
+  const editingTransaction = transactions.find(
+    (transaction) => transaction.id === editingTransactionId
+  )
+  const editingReasonOptions = editingTransaction
+    ? [...new Set([
+        ...(DEFAULT_MOVEMENT_REASONS[editingTransaction.change_type] || []),
+        ...historicalReasonOptions,
+      ])]
+    : historicalReasonOptions
 
 
   return (
@@ -556,7 +674,14 @@ function App() {
           placeholder="Supplier"
           value={supplier}
           onChange={(e) => setSupplier(e.target.value)}
+          list="supplier-options"
         />
+
+        <datalist id="supplier-options">
+          {supplierOptions.map((supplierOption) => (
+            <option key={supplierOption} value={supplierOption} />
+          ))}
+        </datalist>
 
         <button type="submit">
           {editingId ? "Update Item" : "Add Item"}
@@ -640,6 +765,8 @@ function App() {
                 setHistoryPage(0)
                 setHistoryTypeFilter("all")
                 setHistoryHasMore(false)
+                setEditingTransactionId(null)
+                setEditingTransactionNote("")
               }}
             >
               Close
@@ -708,6 +835,7 @@ function App() {
                   value={stockNote}
                   onChange={(event) => setStockNote(event.target.value)}
                   placeholder="Reason for this change"
+                  list="movement-reason-options"
                 />
               </label>
 
@@ -715,6 +843,12 @@ function App() {
                 {stockLoading ? "Saving..." : "Record Movement"}
               </button>
             </form>
+
+            <datalist id="movement-reason-options">
+              {movementReasonOptions.map((reasonOption) => (
+                <option key={reasonOption} value={reasonOption} />
+              ))}
+            </datalist>
 
             {historyLoading && <p>Loading transaction history...</p>}
             {historyError && <p>{historyError}</p>}
@@ -752,11 +886,52 @@ function App() {
                         </td>
                         <td>{transaction.previous_quantity}</td>
                         <td>{transaction.new_quantity}</td>
-                        <td>{transaction.note || "No note"}</td>
+                        <td>
+                          {editingTransactionId === transaction.id ? (
+                            <div className="transaction-note-editor">
+                              <input
+                                value={editingTransactionNote}
+                                onChange={(event) => setEditingTransactionNote(event.target.value)}
+                                placeholder="Add a reason"
+                                list="edit-movement-reason-options"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSaveTransactionNote(transaction)}
+                                disabled={transactionSaving}
+                              >
+                                {transactionSaving ? "Saving..." : "Save"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelTransactionEdit}
+                                disabled={transactionSaving}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="transaction-note-display">
+                              <span>{transaction.note || "No note"}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleEditTransaction(transaction)}
+                              >
+                                Edit Note
+                              </button>
+                            </div>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+
+                <datalist id="edit-movement-reason-options">
+                  {editingReasonOptions.map((reasonOption) => (
+                    <option key={reasonOption} value={reasonOption} />
+                  ))}
+                </datalist>
 
                 <div className="history-pagination">
                   <button

@@ -42,6 +42,29 @@ def _get_item_or_404(item_id: int, db: Session) -> models.Item:
     return item
 
 
+def _get_transaction_or_404(
+    item_id: int,
+    transaction_id: int,
+    db: Session
+) -> models.InventoryTransaction:
+    transaction = (
+        db.query(models.InventoryTransaction)
+        .filter(
+            models.InventoryTransaction.id == transaction_id,
+            models.InventoryTransaction.item_id == item_id,
+        )
+        .first()
+    )
+
+    if transaction is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found"
+        )
+
+    return transaction
+
+
 def _create_transaction(
     *,
     db: Session,
@@ -128,6 +151,17 @@ def search_items(
 
     return query.all()
 
+@router.get("/items/suppliers", response_model=list[str])
+def get_suppliers(db: Session = Depends(get_db)):
+    suppliers = (
+        db.query(models.Item.supplier)
+        .distinct()
+        .order_by(models.Item.supplier.asc())
+        .all()
+    )
+
+    return [supplier for supplier, in suppliers if supplier]
+
 @router.get("/items/{item_id}", response_model=schemas.ItemResponse)
 def get_item(item_id: int, db: Session = Depends(get_db)):
     item = _get_item_or_404(item_id, db)
@@ -171,6 +205,27 @@ def create_inventory_transaction(
         quantity_delta=transaction_input.quantity_delta,
         note=transaction_input.note
     )
+
+    db.commit()
+    db.refresh(transaction)
+
+    return transaction
+
+
+@router.put(
+    "/items/{item_id}/transactions/{transaction_id}",
+    response_model=schemas.InventoryTransactionResponse
+)
+def update_inventory_transaction(
+    item_id: int,
+    transaction_id: int,
+    transaction_update: schemas.InventoryTransactionUpdate,
+    db: Session = Depends(get_db)
+):
+    _get_item_or_404(item_id, db)
+    transaction = _get_transaction_or_404(item_id, transaction_id, db)
+
+    transaction.note = transaction_update.note
 
     db.commit()
     db.refresh(transaction)
