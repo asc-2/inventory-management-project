@@ -182,13 +182,27 @@ def create_inventory_transaction(
     "/items/{item_id}/transactions",
     response_model=list[schemas.InventoryTransactionResponse]
 )
-def get_item_transactions(item_id: int, db: Session = Depends(get_db)):
+def get_item_transactions(
+    item_id: int,
+    skip: int = 0,
+    limit: int = 10,
+    change_type: schemas.TransactionType | None = None,
+    db: Session = Depends(get_db)
+):
     _get_item_or_404(item_id, db)
 
+    query = db.query(models.InventoryTransaction).filter(
+        models.InventoryTransaction.item_id == item_id
+    )
+
+    if change_type:
+        query = query.filter(models.InventoryTransaction.change_type == change_type)
+
     transactions = (
-        db.query(models.InventoryTransaction)
-        .filter(models.InventoryTransaction.item_id == item_id)
+        query
         .order_by(models.InventoryTransaction.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 

@@ -3,6 +3,7 @@ import "./App.css"
 
 const API_URL = "http://127.0.0.1:8000"
 const LOW_STOCK_THRESHOLD = 5
+const HISTORY_PAGE_SIZE = 5
 
 function App() {
   const [items, setItems] = useState([])
@@ -10,6 +11,9 @@ function App() {
   const [transactions, setTransactions] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState("")
+  const [historyTypeFilter, setHistoryTypeFilter] = useState("all")
+  const [historyPage, setHistoryPage] = useState(0)
+  const [historyHasMore, setHistoryHasMore] = useState(false)
   const [stockAction, setStockAction] = useState("stock_in")
   const [stockAmount, setStockAmount] = useState("")
   const [stockNote, setStockNote] = useState("")
@@ -53,13 +57,25 @@ function App() {
     fetchItems()
   }, [])
 
-  const fetchTransactions = async (item) => {
+  const fetchTransactions = async (item, options = {}) => {
+    const nextPage = options.page ?? historyPage
+    const nextTypeFilter = options.typeFilter ?? historyTypeFilter
+
     setSelectedItem(item)
     setHistoryLoading(true)
     setHistoryError("")
 
     try {
-      const response = await fetch(`${API_URL}/items/${item.id}/transactions`)
+      const params = new URLSearchParams({
+        skip: String(nextPage * HISTORY_PAGE_SIZE),
+        limit: String(HISTORY_PAGE_SIZE),
+      })
+
+      if (nextTypeFilter !== "all") {
+        params.append("change_type", nextTypeFilter)
+      }
+
+      const response = await fetch(`${API_URL}/items/${item.id}/transactions?${params}`)
 
       if (!response.ok) {
         throw new Error("Failed to fetch transaction history")
@@ -67,6 +83,9 @@ function App() {
 
       const data = await response.json()
       setTransactions(data)
+      setHistoryPage(nextPage)
+      setHistoryTypeFilter(nextTypeFilter)
+      setHistoryHasMore(data.length === HISTORY_PAGE_SIZE)
     } catch (error) {
       console.error(error)
       setTransactions([])
@@ -113,7 +132,7 @@ function App() {
     setStockAction("stock_in")
     setStockAmount("")
     setStockNote("")
-    await fetchTransactions(item)
+    await fetchTransactions(item, { page: 0, typeFilter: "all" })
   }
 
   const handleSubmit = async (event) => {
@@ -271,7 +290,10 @@ function App() {
       setStockAmount("")
       setStockNote("")
       await fetchItems()
-      await fetchTransactions(updatedSelectedItem)
+      await fetchTransactions(updatedSelectedItem, {
+        page: 0,
+        typeFilter: historyTypeFilter,
+      })
     } catch (error) {
       console.error(error)
       setError(error.message || "Could not record stock movement.")
@@ -354,6 +376,30 @@ function App() {
   const formatDelta = (quantityDelta) => (
     quantityDelta > 0 ? `+${quantityDelta}` : `${quantityDelta}`
   )
+
+  const handleHistoryFilterChange = async (event) => {
+    const nextTypeFilter = event.target.value
+
+    if (!selectedItem) {
+      return
+    }
+
+    await fetchTransactions(selectedItem, {
+      page: 0,
+      typeFilter: nextTypeFilter,
+    })
+  }
+
+  const handleHistoryPageChange = async (nextPage) => {
+    if (!selectedItem || nextPage < 0) {
+      return
+    }
+
+    await fetchTransactions(selectedItem, {
+      page: nextPage,
+      typeFilter: historyTypeFilter,
+    })
+  }
   
   const sortedItems = [...items].sort((a, b) => {
     if (!sortField) {
@@ -591,6 +637,9 @@ function App() {
                 setSelectedItem(null)
                 setTransactions([])
                 setHistoryError("")
+                setHistoryPage(0)
+                setHistoryTypeFilter("all")
+                setHistoryHasMore(false)
               }}
             >
               Close
@@ -608,6 +657,22 @@ function App() {
               Showing history for <strong>{selectedItem.name}</strong> with current stock of{" "}
               <strong>{selectedItem.quantity}</strong>.
             </p>
+
+            <div className="history-controls">
+              <label>
+                Filter
+                <select
+                  value={historyTypeFilter}
+                  onChange={handleHistoryFilterChange}
+                >
+                  <option value="all">All Types</option>
+                  <option value="initial">Initial</option>
+                  <option value="stock_in">Stock In</option>
+                  <option value="stock_out">Stock Out</option>
+                  <option value="adjustment">Adjustment</option>
+                </select>
+              </label>
+            </div>
 
             <form className="stock-form" onSubmit={handleStockSubmit}>
               <label>
@@ -659,38 +724,58 @@ function App() {
             )}
 
             {!historyLoading && !historyError && transactions.length > 0 && (
-              <table border="1" cellPadding="8">
-                <thead>
-                  <tr>
-                    <th>When</th>
-                    <th>Type</th>
-                    <th>Delta</th>
-                    <th>Previous</th>
-                    <th>New</th>
-                    <th>Note</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.map((transaction) => (
-                    <tr key={transaction.id}>
-                      <td>{new Date(transaction.created_at).toLocaleString()}</td>
-                      <td>{formatTransactionType(transaction.change_type)}</td>
-                      <td
-                        className={
-                          transaction.quantity_delta > 0
-                            ? "transaction-positive"
-                            : "transaction-negative"
-                        }
-                      >
-                        {formatDelta(transaction.quantity_delta)}
-                      </td>
-                      <td>{transaction.previous_quantity}</td>
-                      <td>{transaction.new_quantity}</td>
-                      <td>{transaction.note || "No note"}</td>
+              <>
+                <table border="1" cellPadding="8">
+                  <thead>
+                    <tr>
+                      <th>When</th>
+                      <th>Type</th>
+                      <th>Delta</th>
+                      <th>Previous</th>
+                      <th>New</th>
+                      <th>Note</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {transactions.map((transaction) => (
+                      <tr key={transaction.id}>
+                        <td>{new Date(transaction.created_at).toLocaleString()}</td>
+                        <td>{formatTransactionType(transaction.change_type)}</td>
+                        <td
+                          className={
+                            transaction.quantity_delta > 0
+                              ? "transaction-positive"
+                              : "transaction-negative"
+                          }
+                        >
+                          {formatDelta(transaction.quantity_delta)}
+                        </td>
+                        <td>{transaction.previous_quantity}</td>
+                        <td>{transaction.new_quantity}</td>
+                        <td>{transaction.note || "No note"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="history-pagination">
+                  <button
+                    type="button"
+                    onClick={() => handleHistoryPageChange(historyPage - 1)}
+                    disabled={historyPage === 0}
+                  >
+                    Previous
+                  </button>
+                  <span>Page {historyPage + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleHistoryPageChange(historyPage + 1)}
+                    disabled={!historyHasMore}
+                  >
+                    Next
+                  </button>
+                </div>
+              </>
             )}
           </>
         )}

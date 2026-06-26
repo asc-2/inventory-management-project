@@ -199,6 +199,16 @@
   gap: 12px;
 }
 
+.history-controls {
+  margin: 12px 0;
+}
+
+.history-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .stock-form {
   display: flex;
   flex-wrap: wrap;
@@ -221,4 +231,11 @@
 .transaction-negative {
   color: #b42318;
   font-weight: 700;
+}
+
+.history-pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
 }
