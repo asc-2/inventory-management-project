@@ -1,7 +1,10 @@
+from pathlib import Path
+
 from sqlalchemy import create_engine  # type: ignore[import]
 from sqlalchemy.orm import sessionmaker  # type: ignore[import]
 
-DATABASE_URL = "sqlite:///./inventory.db"
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATABASE_URL = f"sqlite:///{BASE_DIR / 'inventory.db'}"
 
 engine = create_engine(
     DATABASE_URL,   

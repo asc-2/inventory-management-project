@@ -6,6 +6,14 @@ const LOW_STOCK_THRESHOLD = 5
 
 function App() {
   const [items, setItems] = useState([])
+  const [selectedItem, setSelectedItem] = useState(null)
+  const [transactions, setTransactions] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState("")
+  const [stockAction, setStockAction] = useState("stock_in")
+  const [stockAmount, setStockAmount] = useState("")
+  const [stockNote, setStockNote] = useState("")
+  const [stockLoading, setStockLoading] = useState(false)
 
   const [name, setName] = useState("")
   const [quantity, setQuantity] = useState("")
@@ -45,6 +53,29 @@ function App() {
     fetchItems()
   }, [])
 
+  const fetchTransactions = async (item) => {
+    setSelectedItem(item)
+    setHistoryLoading(true)
+    setHistoryError("")
+
+    try {
+      const response = await fetch(`${API_URL}/items/${item.id}/transactions`)
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch transaction history")
+      }
+
+      const data = await response.json()
+      setTransactions(data)
+    } catch (error) {
+      console.error(error)
+      setTransactions([])
+      setHistoryError("Could not load transaction history.")
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
   const handleDelete = async (id) => {
     setError("")
 
@@ -57,6 +88,12 @@ function App() {
         throw new Error("Failed to delete item")
       }
 
+      if (selectedItem && selectedItem.id === id) {
+        setSelectedItem(null)
+        setTransactions([])
+        setHistoryError("")
+      }
+
       fetchItems()
     } catch (error) {
       console.error(error)
@@ -66,16 +103,30 @@ function App() {
   const handleEdit = (item) => {
     setEditingId(item.id)
     setName(item.name)
-    setQuantity(item.quantity)
+    setQuantity("")
     setPrice(item.price)
     setCategory(item.category)
     setSupplier(item.supplier)
   }
+
+  const handleSelectItem = async (item) => {
+    setStockAction("stock_in")
+    setStockAmount("")
+    setStockNote("")
+    await fetchTransactions(item)
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError("")
 
-    if (!name.trim() || !quantity || !price || !category.trim() || !supplier.trim()) {
+    if (
+      !name.trim() ||
+      (!editingId && quantity === "") ||
+      price === "" ||
+      !category.trim() ||
+      !supplier.trim()
+    ) {
       setError("Please fill out all item fields.")
       return
     }
@@ -87,7 +138,6 @@ function App() {
 
     const itemData = {
       name: name.trim(),
-      quantity: Number(quantity),
       price: Number(price),
       category: category.trim(),
       supplier: supplier.trim(),
@@ -110,13 +160,29 @@ function App() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(itemData),
+          body: JSON.stringify({
+            ...itemData,
+            quantity: Number(quantity),
+          }),
         })
       }
 
       if (!response.ok) {
-        throw new Error("Failed to save item")
+        let message = "Failed to save item"
+
+        try {
+          const errorData = await response.json()
+          if (typeof errorData.detail === "string") {
+            message = errorData.detail
+          }
+        } catch {
+          // Keep the fallback message when the response is not JSON.
+        }
+
+        throw new Error(message)
       }
+
+      const savedItem = await response.json()
 
       setName("")
       setQuantity("")
@@ -125,12 +191,94 @@ function App() {
       setSupplier("")
       setEditingId(null)
 
-      fetchItems()
+      await fetchItems()
+
+      if (selectedItem && selectedItem.id === editingId) {
+        await fetchTransactions(savedItem)
+      }
     } catch (error) {
       console.error(error)
-      setError("Could not save item. Check that all fields are valid.")
+      setError(error.message || "Could not save item.")
     }
   } 
+
+  const handleStockSubmit = async (event) => {
+    event.preventDefault()
+    setError("")
+
+    if (!selectedItem) {
+      setError("Select an item before recording stock movement.")
+      return
+    }
+
+    if (stockAmount === "") {
+      setError("Enter a stock movement amount.")
+      return
+    }
+
+    if (
+      stockAction === "adjustment" &&
+      Number(stockAmount) === 0
+    ) {
+      setError("Adjustment amount must not be zero.")
+      return
+    }
+
+    if (
+      stockAction !== "adjustment" &&
+      Number(stockAmount) <= 0
+    ) {
+      setError("Enter a stock movement amount greater than zero.")
+      return
+    }
+
+    setStockLoading(true)
+
+    try {
+      const response = await fetch(`${API_URL}/items/${selectedItem.id}/transactions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          change_type: stockAction,
+          quantity_delta: Number(stockAmount),
+          note: stockNote.trim() || null,
+        }),
+      })
+
+      if (!response.ok) {
+        let message = "Failed to record stock movement"
+
+        try {
+          const errorData = await response.json()
+          if (typeof errorData.detail === "string") {
+            message = errorData.detail
+          }
+        } catch {
+          // Keep fallback error.
+        }
+
+        throw new Error(message)
+      }
+
+      const savedTransaction = await response.json()
+      const updatedSelectedItem = {
+        ...selectedItem,
+        quantity: savedTransaction.new_quantity,
+      }
+
+      setStockAmount("")
+      setStockNote("")
+      await fetchItems()
+      await fetchTransactions(updatedSelectedItem)
+    } catch (error) {
+      console.error(error)
+      setError(error.message || "Could not record stock movement.")
+    } finally {
+      setStockLoading(false)
+    }
+  }
 
   const handleSearch = async (event) => {
     event.preventDefault()
@@ -195,6 +343,17 @@ function App() {
 
     return `${label} ${sortDirection === "asc" ? "↑" : "↓"}`
   }
+
+  const formatTransactionType = (changeType) => (
+    changeType
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+  )
+
+  const formatDelta = (quantityDelta) => (
+    quantityDelta > 0 ? `+${quantityDelta}` : `${quantityDelta}`
+  )
   
   const sortedItems = [...items].sort((a, b) => {
     if (!sortField) {
@@ -326,10 +485,11 @@ function App() {
         />
 
         <input
-          placeholder="Quantity"
+          placeholder={editingId ? "Use stock movement below" : "Quantity"}
           type="number"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
+          disabled={Boolean(editingId)}
         />
 
         <input
@@ -357,9 +517,12 @@ function App() {
         </button>
 
         {editingId && (
-          <button type="button" onClick={handleCancelEdit}>
-            Cancel Edit
-          </button>
+          <>
+            <span>Quantity changes now use the stock movement form below.</span>
+            <button type="button" onClick={handleCancelEdit}>
+              Cancel Edit
+            </button>
+          </>
         )}
       </form>
 
@@ -404,6 +567,10 @@ function App() {
                   Edit
                 </button>
 
+                <button onClick={() => handleSelectItem(item)}>
+                  History
+                </button>
+
                 <button onClick={() => handleDelete(item.id)}>
                   Delete
                 </button>
@@ -412,6 +579,122 @@ function App() {
           ))}
         </tbody>
       </table>
+
+      <section className="history-panel">
+        <div className="history-header">
+          <h2>Transaction History</h2>
+
+          {selectedItem && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedItem(null)
+                setTransactions([])
+                setHistoryError("")
+              }}
+            >
+              Close
+            </button>
+          )}
+        </div>
+
+        {!selectedItem && (
+          <p>Select an item to inspect its quantity changes.</p>
+        )}
+
+        {selectedItem && (
+          <>
+            <p>
+              Showing history for <strong>{selectedItem.name}</strong> with current stock of{" "}
+              <strong>{selectedItem.quantity}</strong>.
+            </p>
+
+            <form className="stock-form" onSubmit={handleStockSubmit}>
+              <label>
+                Movement Type
+                <select
+                  value={stockAction}
+                  onChange={(event) => setStockAction(event.target.value)}
+                >
+                  <option value="stock_in">Stock In</option>
+                  <option value="stock_out">Stock Out</option>
+                  <option value="adjustment">Adjustment</option>
+                </select>
+              </label>
+
+              <label>
+                Amount
+                <input
+                  type="number"
+                  min={stockAction === "adjustment" ? undefined : "1"}
+                  value={stockAmount}
+                  onChange={(event) => setStockAmount(event.target.value)}
+                  placeholder={
+                    stockAction === "adjustment"
+                      ? "Use positive or negative units"
+                      : "Enter units"
+                  }
+                />
+              </label>
+
+              <label>
+                Note
+                <input
+                  value={stockNote}
+                  onChange={(event) => setStockNote(event.target.value)}
+                  placeholder="Reason for this change"
+                />
+              </label>
+
+              <button type="submit" disabled={stockLoading}>
+                {stockLoading ? "Saving..." : "Record Movement"}
+              </button>
+            </form>
+
+            {historyLoading && <p>Loading transaction history...</p>}
+            {historyError && <p>{historyError}</p>}
+
+            {!historyLoading && !historyError && transactions.length === 0 && (
+              <p>No transactions recorded for this item yet.</p>
+            )}
+
+            {!historyLoading && !historyError && transactions.length > 0 && (
+              <table border="1" cellPadding="8">
+                <thead>
+                  <tr>
+                    <th>When</th>
+                    <th>Type</th>
+                    <th>Delta</th>
+                    <th>Previous</th>
+                    <th>New</th>
+                    <th>Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((transaction) => (
+                    <tr key={transaction.id}>
+                      <td>{new Date(transaction.created_at).toLocaleString()}</td>
+                      <td>{formatTransactionType(transaction.change_type)}</td>
+                      <td
+                        className={
+                          transaction.quantity_delta > 0
+                            ? "transaction-positive"
+                            : "transaction-negative"
+                        }
+                      >
+                        {formatDelta(transaction.quantity_delta)}
+                      </td>
+                      <td>{transaction.previous_quantity}</td>
+                      <td>{transaction.new_quantity}</td>
+                      <td>{transaction.note || "No note"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+      </section>
     </div>
   )
 }

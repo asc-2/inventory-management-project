@@ -187,3 +187,38 @@
     background-color:#ffcbcf;
     font-weight: bold;
 }
+
+.history-panel {
+  margin-top: 24px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stock-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin: 16px 0;
+}
+
+.stock-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.transaction-positive {
+  color: #0f7b0f;
+  font-weight: 700;
+}
+
+.transaction-negative {
+  color: #b42318;
+  font-weight: 700;
+}
