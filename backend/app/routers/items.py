@@ -15,6 +15,7 @@ def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)):
         quantity=item.quantity,
         price=item.price,
         category=item.category,
+        supplier=item.supplier,
     )
 
     db.add(new_item)
@@ -78,6 +79,7 @@ def update_item(
     item.quantity = updated_item.quantity
     item.price = updated_item.price
     item.category = updated_item.category
+    item.supplier = updated_item.supplier
 
     db.commit()
     db.refresh(item)

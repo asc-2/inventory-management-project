@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float # type: ignore
-from sqlalchemy.orm import declarative_base # type: ignore
-from sqlalchemy import Column, Integer, String, Float, DateTime # type: ignore
+from sqlalchemy import Column, DateTime, Float, Integer, String  # type: ignore
+from sqlalchemy.orm import declarative_base  # type: ignore
 
-from datetime import datetime # type: ignore
+from datetime import datetime  # type: ignore
 
 Base = declarative_base()
 
@@ -15,6 +14,7 @@ class Item(Base):
     quantity = Column(Integer)
     price = Column(Float)
     category = Column(String)
+    supplier = Column(String)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(

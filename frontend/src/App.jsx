@@ -229,8 +229,18 @@ function App() {
       counts[item.category] = 1
     }
 
-  return counts
-}, {})
+    return counts
+  }, {})
+
+  const supplierCounts = items.reduce((counts, item) => {
+    if (counts[item.supplier]) {
+      counts[item.supplier]++
+    } else {
+      counts[item.supplier] = 1
+    }
+
+    return counts
+  }, {})
 
 
   return (
@@ -278,6 +288,17 @@ function App() {
 
         </ul>
 
+      </section>
+
+      <section>
+        <h2>Inventory by Supplier</h2>
+        <ul>
+          {Object.entries(supplierCounts).map(([supplier, count]) => (
+            <li key={supplier}>
+              {supplier}: {count} item{count !== 1 ? "s" : ""}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <form onSubmit={handleSearch}>
