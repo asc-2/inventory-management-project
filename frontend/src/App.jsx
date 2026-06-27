@@ -1,5 +1,12 @@
+// this file is the main frontend container for the inventory app.
+// it keeps the app state and passes data into smaller ui components.
 import { useEffect, useState } from "react"
 import "./App.css"
+import InventorySummary from "./components/InventorySummary"
+import SearchForm from "./components/SearchForm"
+import ItemForm from "./components/ItemForm"
+import InventoryTable from "./components/InventoryTable"
+import TransactionHistoryPanel from "./components/TransactionHistoryPanel"
 
 const API_URL = "http://127.0.0.1:8000"
 const LOW_STOCK_THRESHOLD = 5
@@ -11,8 +18,11 @@ const DEFAULT_MOVEMENT_REASONS = {
 }
 
 function App() {
+  // these state values manage item data and supplier suggestions.
   const [items, setItems] = useState([])
   const [supplierOptions, setSupplierOptions] = useState([])
+
+  // these state values manage the selected item history panel.
   const [selectedItem, setSelectedItem] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -20,20 +30,27 @@ function App() {
   const [historyTypeFilter, setHistoryTypeFilter] = useState("all")
   const [historyPage, setHistoryPage] = useState(0)
   const [historyHasMore, setHistoryHasMore] = useState(false)
+
+  // these state values manage the stock movement form.
   const [stockAction, setStockAction] = useState("stock_in")
   const [stockAmount, setStockAmount] = useState("")
   const [stockNote, setStockNote] = useState("")
   const [stockLoading, setStockLoading] = useState(false)
+
+  // these state values manage inline note editing in the history table.
   const [editingTransactionId, setEditingTransactionId] = useState(null)
   const [editingTransactionNote, setEditingTransactionNote] = useState("")
   const [transactionSaving, setTransactionSaving] = useState(false)
 
+  // these state values manage the item create and edit form.
   const [name, setName] = useState("")
   const [quantity, setQuantity] = useState("")
   const [price, setPrice] = useState("")
   const [category, setCategory] = useState("")
   const [supplier, setSupplier] = useState("")
   const [editingId, setEditingId] = useState(null)
+
+  // these state values manage search, sorting, and general ui feedback.
   const [searchName, setSearchName] = useState("")
   const [searchCategory, setSearchCategory] = useState("")
   const [sortField, setSortField] = useState(null)
@@ -41,6 +58,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  // loads the current item list from the backend.
   const fetchItems = async () => {
     setLoading(true)
     setError("")
@@ -62,6 +80,7 @@ function App() {
     }
   }
 
+  // loads unique supplier names for the supplier suggestion list.
   const fetchSupplierOptions = async () => {
     try {
       const response = await fetch(`${API_URL}/items/suppliers`)
@@ -77,15 +96,18 @@ function App() {
     }
   }
 
+  // runs once when the page first loads.
   useEffect(() => {
     fetchItems()
     fetchSupplierOptions()
   }, [])
 
+  // loads one page of transaction history for the selected item.
   const fetchTransactions = async (item, options = {}) => {
     const nextPage = options.page ?? historyPage
     const nextTypeFilter = options.typeFilter ?? historyTypeFilter
 
+    // resets history ui state before loading new data.
     setSelectedItem(item)
     setHistoryLoading(true)
     setHistoryError("")
@@ -93,6 +115,7 @@ function App() {
     setEditingTransactionNote("")
 
     try {
+      // builds the query string for paging and filtering.
       const params = new URLSearchParams({
         skip: String(nextPage * HISTORY_PAGE_SIZE),
         limit: String(HISTORY_PAGE_SIZE),
@@ -109,6 +132,8 @@ function App() {
       }
 
       const data = await response.json()
+
+      // saves the new history data and page info.
       setTransactions(data)
       setHistoryPage(nextPage)
       setHistoryTypeFilter(nextTypeFilter)
@@ -122,6 +147,7 @@ function App() {
     }
   }
 
+  // deletes one item from the backend.
   const handleDelete = async (id) => {
     setError("")
 
@@ -135,6 +161,7 @@ function App() {
       }
 
       if (selectedItem && selectedItem.id === id) {
+        // clears the history panel if the selected item was deleted.
         setSelectedItem(null)
         setTransactions([])
         setHistoryError("")
@@ -147,6 +174,8 @@ function App() {
       setError("Could not delete item.")
     }
   }
+
+  // fills the form with item details for editing.
   const handleEdit = (item) => {
     setEditingId(item.id)
     setName(item.name)
@@ -156,6 +185,7 @@ function App() {
     setSupplier(item.supplier)
   }
 
+  // opens the history panel for one item and resets stock form state.
   const handleSelectItem = async (item) => {
     setStockAction("stock_in")
     setStockAmount("")
@@ -165,10 +195,12 @@ function App() {
     await fetchTransactions(item, { page: 0, typeFilter: "all" })
   }
 
+  // saves a new item or updates an existing one.
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError("")
 
+    // checks that the main item form is filled in.
     if (
       !name.trim() ||
       (!editingId && quantity === "") ||
@@ -180,6 +212,7 @@ function App() {
       return
     }
 
+    // blocks negative values before sending to the backend.
     if (Number(quantity) < 0 || Number(price) < 0) {
       setError("Quantity and price cannot be negative.")
       return
@@ -196,6 +229,7 @@ function App() {
       let response
 
       if (editingId) {
+        // updates item details without changing quantity.
         response = await fetch(`${API_URL}/items/${editingId}`, {
           method: "PUT",
           headers: {
@@ -204,6 +238,7 @@ function App() {
           body: JSON.stringify(itemData),
         })
       } else {
+        // creates a new item with its starting quantity.
         response = await fetch(`${API_URL}/items`, {
           method: "POST",
           headers: {
@@ -217,6 +252,7 @@ function App() {
       }
 
       if (!response.ok) {
+        // tries to show the backend error message if one exists.
         let message = "Failed to save item"
 
         try {
@@ -233,6 +269,7 @@ function App() {
 
       const savedItem = await response.json()
 
+      // clears the form after a successful save.
       setName("")
       setQuantity("")
       setPrice("")
@@ -240,10 +277,12 @@ function App() {
       setSupplier("")
       setEditingId(null)
 
+      // refreshes the list and supplier suggestions.
       await fetchItems()
       await fetchSupplierOptions()
 
       if (selectedItem && selectedItem.id === editingId) {
+        // refreshes history if the edited item is currently selected.
         await fetchTransactions(savedItem)
       }
     } catch (error) {
@@ -252,20 +291,24 @@ function App() {
     }
   } 
 
+  // records a stock movement for the selected item.
   const handleStockSubmit = async (event) => {
     event.preventDefault()
     setError("")
 
+    // makes sure a user selected an item first.
     if (!selectedItem) {
       setError("Select an item before recording stock movement.")
       return
     }
 
+    // checks that some amount was entered.
     if (stockAmount === "") {
       setError("Enter a stock movement amount.")
       return
     }
 
+    // makes sure an adjustment is not zero.
     if (
       stockAction === "adjustment" &&
       Number(stockAmount) === 0
@@ -274,6 +317,7 @@ function App() {
       return
     }
 
+    // makes sure stock in and stock out use positive amounts.
     if (
       stockAction !== "adjustment" &&
       Number(stockAmount) <= 0
@@ -285,6 +329,7 @@ function App() {
     setStockLoading(true)
 
     try {
+      // sends the stock movement to the backend.
       const response = await fetch(`${API_URL}/items/${selectedItem.id}/transactions`, {
         method: "POST",
         headers: {
@@ -313,6 +358,8 @@ function App() {
       }
 
       const savedTransaction = await response.json()
+
+      // updates the selected item quantity using the new transaction result.
       const updatedSelectedItem = {
         ...selectedItem,
         quantity: savedTransaction.new_quantity,
@@ -320,6 +367,8 @@ function App() {
 
       setStockAmount("")
       setStockNote("")
+
+      // refreshes the list, suggestions, and history panel.
       await fetchItems()
       await fetchSupplierOptions()
       await fetchTransactions(updatedSelectedItem, {
@@ -334,6 +383,7 @@ function App() {
     }
   }
 
+  // searches the inventory using the current search inputs.
   const handleSearch = async (event) => {
     event.preventDefault()
     setLoading(true)
@@ -341,10 +391,12 @@ function App() {
 
     const params = new URLSearchParams()
 
+    // only sends the name filter if the user typed one.
     if (searchName) {
       params.append("name", searchName)
     }
 
+    // only sends the category filter if the user typed one.
     if (searchCategory) {
       params.append("category", searchCategory)
     }
@@ -367,12 +419,14 @@ function App() {
   }
 
   const handleClearSearch = () => {
+    // this clears the search fields and reloads the full list.
     setSearchName("")
     setSearchCategory("")
     fetchItems()
   }
 
   const handleCancelEdit = () => {
+    // this resets the item form when edit mode is canceled.
     setName("")
     setQuantity("")
     setPrice("")
@@ -382,6 +436,7 @@ function App() {
   }
 
   const handleSort = (field) => {
+    // this toggles the sort field and direction for the table.
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
@@ -391,6 +446,7 @@ function App() {
   }
 
   const getSortLabel = (field, label) => {
+    // this adds an arrow to the active sort column label.
     if (sortField !== field) {
       return label
     }
@@ -399,6 +455,7 @@ function App() {
   }
 
   const formatTransactionType = (changeType) => (
+    // this turns values like stock_in into stock in for the ui.
     changeType
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -406,10 +463,12 @@ function App() {
   )
 
   const formatDelta = (quantityDelta) => (
+    // this adds a plus sign to positive stock changes.
     quantityDelta > 0 ? `+${quantityDelta}` : `${quantityDelta}`
   )
 
   const handleHistoryFilterChange = async (event) => {
+    // this changes the history type filter and goes back to page one.
     const nextTypeFilter = event.target.value
 
     if (!selectedItem) {
@@ -423,6 +482,7 @@ function App() {
   }
 
   const handleHistoryPageChange = async (nextPage) => {
+    // this loads the next or previous page of history.
     if (!selectedItem || nextPage < 0) {
       return
     }
@@ -434,16 +494,19 @@ function App() {
   }
 
   const handleEditTransaction = (transaction) => {
+    // this opens inline edit mode for one transaction note.
     setEditingTransactionId(transaction.id)
     setEditingTransactionNote(transaction.note || "")
   }
 
   const handleCancelTransactionEdit = () => {
+    // this closes inline note editing without saving.
     setEditingTransactionId(null)
     setEditingTransactionNote("")
   }
 
   const handleSaveTransactionNote = async (transaction) => {
+    // this saves an edited transaction note.
     if (!selectedItem) {
       return
     }
@@ -452,6 +515,7 @@ function App() {
     setTransactionSaving(true)
 
     try {
+      // this sends only the note update to the backend.
       const response = await fetch(
         `${API_URL}/items/${selectedItem.id}/transactions/${transaction.id}`,
         {
@@ -481,6 +545,8 @@ function App() {
       }
 
       const updatedTransaction = await response.json()
+
+      // this swaps the updated transaction into the current history list.
       setTransactions((currentTransactions) =>
         currentTransactions.map((currentTransaction) =>
           currentTransaction.id === updatedTransaction.id
@@ -498,6 +564,7 @@ function App() {
     }
   }
   
+  // this sorts items on the client using the active sort settings.
   const sortedItems = [...items].sort((a, b) => {
     if (!sortField) {
       return 0
@@ -517,6 +584,7 @@ function App() {
       : String(bValue).localeCompare(String(aValue))
   })
 
+  // these values are used by the summary cards and alerts.
   const totalItems = items.length
   const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0)
   const totalValue = items.reduce( (sum, item) => sum + item.quantity * item.price, 0)
@@ -524,6 +592,7 @@ function App() {
   (item) => item.quantity <= LOW_STOCK_THRESHOLD
 )
 
+  // this counts items by category for the summary section.
   const categoryCounts = items.reduce((counts, item) => {
     if (counts[item.category]) {
       counts[item.category]++
@@ -534,6 +603,7 @@ function App() {
     return counts
   }, {})
 
+  // this counts items by supplier for the summary section.
   const supplierCounts = items.reduce((counts, item) => {
     if (counts[item.supplier]) {
       counts[item.supplier]++
@@ -544,20 +614,25 @@ function App() {
     return counts
   }, {})
 
+  // these are past note values used in the movement suggestion list.
   const historicalReasonOptions = [...new Set(
     transactions
       .map((transaction) => transaction.note?.trim())
       .filter(Boolean)
   )].sort((a, b) => a.localeCompare(b))
 
+  // these suggestions combine defaults with reasons already used before.
   const movementReasonOptions = [...new Set([
     ...(DEFAULT_MOVEMENT_REASONS[stockAction] || []),
     ...historicalReasonOptions,
   ])]
 
+  // this finds the transaction currently being edited.
   const editingTransaction = transactions.find(
     (transaction) => transaction.id === editingTransactionId
   )
+
+  // these note suggestions change based on the transaction being edited.
   const editingReasonOptions = editingTransaction
     ? [...new Set([
         ...(DEFAULT_MOVEMENT_REASONS[editingTransaction.change_type] || []),
@@ -568,393 +643,104 @@ function App() {
 
   return (
     <div>
+      {/* this is the main page heading. */}
       <h1>Inventory Management</h1>
 
+      {/* these show general app messages near the top. */}
       {error && <p>{error}</p>}
       {loading && <p>Loading...</p>}
 
-      <section>
-        <p>Total item types: {totalItems}</p>
-        <p>Total units in stock: {totalUnits}</p>
-        <p>Total inventory value: ${totalValue.toFixed(2)}</p>
-      </section>
+      {/* this shows the dashboard summary sections. */}
+      <InventorySummary
+        totalItems={totalItems}
+        totalUnits={totalUnits}
+        totalValue={totalValue}
+        lowStockItems={lowStockItems}
+        categoryCounts={categoryCounts}
+        supplierCounts={supplierCounts}
+      />
 
-      {lowStockItems.length > 0 && (
-        <section>
-          <h2>Low Stock Alerts</h2>
+      {/* this shows the search controls for name and category. */}
+      <SearchForm
+        searchName={searchName}
+        searchCategory={searchCategory}
+        onSearchNameChange={setSearchName}
+        onSearchCategoryChange={setSearchCategory}
+        onSubmit={handleSearch}
+        onClear={handleClearSearch}
+      />
 
-          <ul>
-            {lowStockItems.map((item) => (
-              <li key={item.id}>
-                {item.name} is low on stock: {item.quantity} remaining
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* this shows the item create and edit form. */}
+      <ItemForm
+        name={name}
+        quantity={quantity}
+        price={price}
+        category={category}
+        supplier={supplier}
+        editingId={editingId}
+        supplierOptions={supplierOptions}
+        onNameChange={setName}
+        onQuantityChange={setQuantity}
+        onPriceChange={setPrice}
+        onCategoryChange={setCategory}
+        onSupplierChange={setSupplier}
+        onSubmit={handleSubmit}
+        onCancelEdit={handleCancelEdit}
+      />
 
-      <section>
+      {/* this shows the main inventory table. */}
+      <InventoryTable
+        loading={loading}
+        items={sortedItems}
+        lowStockThreshold={LOW_STOCK_THRESHOLD}
+        getSortLabel={getSortLabel}
+        onSort={handleSort}
+        onEdit={handleEdit}
+        onShowHistory={handleSelectItem}
+        onDelete={handleDelete}
+      />
 
-        <h2>Inventory by Category</h2>
-
-        <ul>
-
-          {Object.entries(categoryCounts).map(([category, count]) => (
-
-            <li key={category}>
-
-              {category}: {count} item{count !== 1 ? "s" : ""}
-
-            </li>
-
-          ))}
-
-        </ul>
-
-      </section>
-
-      <section>
-        <h2>Inventory by Supplier</h2>
-        <ul>
-          {Object.entries(supplierCounts).map(([supplier, count]) => (
-            <li key={supplier}>
-              {supplier}: {count} item{count !== 1 ? "s" : ""}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <form onSubmit={handleSearch}>
-        <input
-          placeholder="Search by name"
-          value={searchName}
-          onChange={(e) => setSearchName(e.target.value)}
-        />
-
-        <input
-          placeholder="Search by category"
-          value={searchCategory}
-          onChange={(e) => setSearchCategory(e.target.value)}
-        />
-
-        <button type="submit">Search</button>
-        <button type="button" onClick={handleClearSearch}>Clear</button>
-      </form>
-
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-
-        <input
-          placeholder={editingId ? "Use stock movement below" : "Quantity"}
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-          disabled={Boolean(editingId)}
-        />
-
-        <input
-          placeholder="Price"
-          type="number"
-          step="0.01"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-        />
-
-        <input
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
-
-        <input
-          placeholder="Supplier"
-          value={supplier}
-          onChange={(e) => setSupplier(e.target.value)}
-          list="supplier-options"
-        />
-
-        <datalist id="supplier-options">
-          {supplierOptions.map((supplierOption) => (
-            <option key={supplierOption} value={supplierOption} />
-          ))}
-        </datalist>
-
-        <button type="submit">
-          {editingId ? "Update Item" : "Add Item"}
-        </button>
-
-        {editingId && (
-          <>
-            <span>Quantity changes now use the stock movement form below.</span>
-            <button type="button" onClick={handleCancelEdit}>
-              Cancel Edit
-            </button>
-          </>
-        )}
-      </form>
-
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th onClick={() => handleSort("id")}>{getSortLabel("id", "ID")}</th>
-            <th onClick={() => handleSort("name")}>{getSortLabel("name", "Name")}</th>
-            <th onClick={() => handleSort("quantity")}>{getSortLabel("quantity", "Quantity")}</th>
-            <th onClick={() => handleSort("price")}>{getSortLabel("price", "Price")}</th>
-            <th onClick={() => handleSort("category")}>{getSortLabel("category", "Category")}</th>
-            <th onClick={() => handleSort("supplier")}>{getSortLabel("supplier", "Supplier")}</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {!loading && sortedItems.length === 0 && (
-            <tr>
-              <td colSpan="7">No items found.</td>
-            </tr>
-          )}
-
-          {sortedItems.map((item) => (
-            <tr key={item.id}>
-              <td>{item.id}</td>
-              <td>{item.name}</td>
-              <td
-                className={
-                  item.quantity <= LOW_STOCK_THRESHOLD
-                    ? "low-stock"
-                    : ""
-                }
-              >
-                {item.quantity}
-              </td>
-              <td>${item.price}</td>
-              <td>{item.category}</td>
-              <td>{item.supplier}</td>
-              <td>
-                <button onClick={() => handleEdit(item)}>
-                  Edit
-                </button>
-
-                <button onClick={() => handleSelectItem(item)}>
-                  History
-                </button>
-
-                <button onClick={() => handleDelete(item.id)}>
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <section className="history-panel">
-        <div className="history-header">
-          <h2>Transaction History</h2>
-
-          {selectedItem && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedItem(null)
-                setTransactions([])
-                setHistoryError("")
-                setHistoryPage(0)
-                setHistoryTypeFilter("all")
-                setHistoryHasMore(false)
-                setEditingTransactionId(null)
-                setEditingTransactionNote("")
-              }}
-            >
-              Close
-            </button>
-          )}
-        </div>
-
-        {!selectedItem && (
-          <p>Select an item to inspect its quantity changes.</p>
-        )}
-
-        {selectedItem && (
-          <>
-            <p>
-              Showing history for <strong>{selectedItem.name}</strong> with current stock of{" "}
-              <strong>{selectedItem.quantity}</strong>.
-            </p>
-
-            <div className="history-controls">
-              <label>
-                Filter
-                <select
-                  value={historyTypeFilter}
-                  onChange={handleHistoryFilterChange}
-                >
-                  <option value="all">All Types</option>
-                  <option value="initial">Initial</option>
-                  <option value="stock_in">Stock In</option>
-                  <option value="stock_out">Stock Out</option>
-                  <option value="adjustment">Adjustment</option>
-                </select>
-              </label>
-            </div>
-
-            <form className="stock-form" onSubmit={handleStockSubmit}>
-              <label>
-                Movement Type
-                <select
-                  value={stockAction}
-                  onChange={(event) => setStockAction(event.target.value)}
-                >
-                  <option value="stock_in">Stock In</option>
-                  <option value="stock_out">Stock Out</option>
-                  <option value="adjustment">Adjustment</option>
-                </select>
-              </label>
-
-              <label>
-                Amount
-                <input
-                  type="number"
-                  min={stockAction === "adjustment" ? undefined : "1"}
-                  value={stockAmount}
-                  onChange={(event) => setStockAmount(event.target.value)}
-                  placeholder={
-                    stockAction === "adjustment"
-                      ? "Use positive or negative units"
-                      : "Enter units"
-                  }
-                />
-              </label>
-
-              <label>
-                Note
-                <input
-                  value={stockNote}
-                  onChange={(event) => setStockNote(event.target.value)}
-                  placeholder="Reason for this change"
-                  list="movement-reason-options"
-                />
-              </label>
-
-              <button type="submit" disabled={stockLoading}>
-                {stockLoading ? "Saving..." : "Record Movement"}
-              </button>
-            </form>
-
-            <datalist id="movement-reason-options">
-              {movementReasonOptions.map((reasonOption) => (
-                <option key={reasonOption} value={reasonOption} />
-              ))}
-            </datalist>
-
-            {historyLoading && <p>Loading transaction history...</p>}
-            {historyError && <p>{historyError}</p>}
-
-            {!historyLoading && !historyError && transactions.length === 0 && (
-              <p>No transactions recorded for this item yet.</p>
-            )}
-
-            {!historyLoading && !historyError && transactions.length > 0 && (
-              <>
-                <table border="1" cellPadding="8">
-                  <thead>
-                    <tr>
-                      <th>When</th>
-                      <th>Type</th>
-                      <th>Delta</th>
-                      <th>Previous</th>
-                      <th>New</th>
-                      <th>Note</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((transaction) => (
-                      <tr key={transaction.id}>
-                        <td>{new Date(transaction.created_at).toLocaleString()}</td>
-                        <td>{formatTransactionType(transaction.change_type)}</td>
-                        <td
-                          className={
-                            transaction.quantity_delta > 0
-                              ? "transaction-positive"
-                              : "transaction-negative"
-                          }
-                        >
-                          {formatDelta(transaction.quantity_delta)}
-                        </td>
-                        <td>{transaction.previous_quantity}</td>
-                        <td>{transaction.new_quantity}</td>
-                        <td>
-                          {editingTransactionId === transaction.id ? (
-                            <div className="transaction-note-editor">
-                              <input
-                                value={editingTransactionNote}
-                                onChange={(event) => setEditingTransactionNote(event.target.value)}
-                                placeholder="Add a reason"
-                                list="edit-movement-reason-options"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleSaveTransactionNote(transaction)}
-                                disabled={transactionSaving}
-                              >
-                                {transactionSaving ? "Saving..." : "Save"}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleCancelTransactionEdit}
-                                disabled={transactionSaving}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="transaction-note-display">
-                              <span>{transaction.note || "No note"}</span>
-                              <button
-                                type="button"
-                                onClick={() => handleEditTransaction(transaction)}
-                              >
-                                Edit Note
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <datalist id="edit-movement-reason-options">
-                  {editingReasonOptions.map((reasonOption) => (
-                    <option key={reasonOption} value={reasonOption} />
-                  ))}
-                </datalist>
-
-                <div className="history-pagination">
-                  <button
-                    type="button"
-                    onClick={() => handleHistoryPageChange(historyPage - 1)}
-                    disabled={historyPage === 0}
-                  >
-                    Previous
-                  </button>
-                  <span>Page {historyPage + 1}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleHistoryPageChange(historyPage + 1)}
-                    disabled={!historyHasMore}
-                  >
-                    Next
-                  </button>
-                </div>
-              </>
-            )}
-          </>
-        )}
-      </section>
+      {/* this shows transaction history and stock movement tools. */}
+      <TransactionHistoryPanel
+        selectedItem={selectedItem}
+        transactions={transactions}
+        historyLoading={historyLoading}
+        historyError={historyError}
+        historyTypeFilter={historyTypeFilter}
+        historyPage={historyPage}
+        historyHasMore={historyHasMore}
+        stockAction={stockAction}
+        stockAmount={stockAmount}
+        stockNote={stockNote}
+        stockLoading={stockLoading}
+        editingTransactionId={editingTransactionId}
+        editingTransactionNote={editingTransactionNote}
+        transactionSaving={transactionSaving}
+        movementReasonOptions={movementReasonOptions}
+        editingReasonOptions={editingReasonOptions}
+        formatTransactionType={formatTransactionType}
+        formatDelta={formatDelta}
+        onClose={() => {
+          setSelectedItem(null)
+          setTransactions([])
+          setHistoryError("")
+          setHistoryPage(0)
+          setHistoryTypeFilter("all")
+          setHistoryHasMore(false)
+          setEditingTransactionId(null)
+          setEditingTransactionNote("")
+        }}
+        onHistoryFilterChange={handleHistoryFilterChange}
+        onStockActionChange={setStockAction}
+        onStockAmountChange={setStockAmount}
+        onStockNoteChange={setStockNote}
+        onStockSubmit={handleStockSubmit}
+        onEditTransaction={handleEditTransaction}
+        onEditingTransactionNoteChange={setEditingTransactionNote}
+        onSaveTransactionNote={handleSaveTransactionNote}
+        onCancelTransactionEdit={handleCancelTransactionEdit}
+        onHistoryPageChange={handleHistoryPageChange}
+      />
     </div>
   )
 }

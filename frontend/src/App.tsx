@@ -1,3 +1,5 @@
+// this file is the default vite react example screen.
+// it is not the main inventory app, but it stays here as starter code.
 import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
@@ -5,10 +7,12 @@ import heroImg from './assets/hero.png'
 import './App.css'
 
 function App() {
+  // this keeps track of the sample counter value.
   const [count, setCount] = useState(0)
 
   return (
     <>
+      {/* this is the starter hero section from vite. */}
       <section id="center">
         <div className="hero">
           <img src={heroImg} className="base" width="170" height="179" alt="" />
@@ -24,14 +28,17 @@ function App() {
         <button
           type="button"
           className="counter"
+          // this increases the sample counter when clicked.
           onClick={() => setCount((count) => count + 1)}
         >
           Count is {count}
         </button>
       </section>
 
+      {/* this is a small divider from the starter layout. */}
       <div className="ticks"></div>
 
+      {/* this is the starter next steps section. */}
       <section id="next-steps">
         <div id="docs">
           <svg className="icon" role="presentation" aria-hidden="true">
@@ -113,6 +120,7 @@ function App() {
         </div>
       </section>
 
+      {/* this is another starter divider and spacer. */}
       <div className="ticks"></div>
       <section id="spacer"></section>
     </>

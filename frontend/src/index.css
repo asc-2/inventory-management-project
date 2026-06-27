@@ -1,3 +1,7 @@
+/* this file stores the global page styles and theme values. */
+/* it sets shared colors, fonts, spacing, and base element rules. */
+
+/* these root variables control the main light theme colors and fonts. */
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -30,6 +34,7 @@
   }
 }
 
+/* these values switch the global theme when dark mode is preferred. */
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #9ca3af;
@@ -50,10 +55,12 @@
   }
 }
 
+/* this removes the browser default page margin. */
 body {
   margin: 0;
 }
 
+/* this sizes and centers the main react app container. */
 #root {
   width: 1126px;
   max-width: 100%;
@@ -66,6 +73,7 @@ body {
   box-sizing: border-box;
 }
 
+/* these styles set the shared heading look. */
 h1,
 h2 {
   font-family: var(--heading);
@@ -73,6 +81,7 @@ h2 {
   color: var(--text-h);
 }
 
+/* this styles the main page title. */
 h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
@@ -82,6 +91,8 @@ h1 {
     margin: 20px 0;
   }
 }
+
+/* this styles second-level section headings. */
 h2 {
   font-size: 24px;
   line-height: 118%;
@@ -91,10 +102,13 @@ h2 {
     font-size: 20px;
   }
 }
+
+/* this removes extra margin from paragraphs. */
 p {
   margin: 0;
 }
 
+/* these styles set the shared code-like text look. */
 code,
 .counter {
   font-family: var(--mono);
@@ -103,6 +117,7 @@ code,
   color: var(--text-h);
 }
 
+/* this styles inline code text. */
 code {
   font-size: 15px;
   line-height: 135%;

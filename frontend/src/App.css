@@ -1,3 +1,7 @@
+/* stores styles used by the main jsx app and shared components. */
+/* includes old starter styles plus the inventory-specific table and panel styles. */
+
+/* styles the old starter counter button. */
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -17,6 +21,7 @@
   }
 }
 
+/* styles the old starter hero art. */
 .hero {
   position: relative;
 
@@ -56,6 +61,7 @@
   }
 }
 
+/* styles the old starter center section. */
 #center {
   display: flex;
   flex-direction: column;
@@ -70,6 +76,7 @@
   }
 }
 
+/* styles the old starter next steps area. */
 #next-steps {
   display: flex;
   border-top: 1px solid var(--border);
@@ -95,6 +102,7 @@
   }
 }
 
+/* styles the left starter docs block. */
 #docs {
   border-right: 1px solid var(--border);
 
@@ -104,6 +112,7 @@
   }
 }
 
+/* styles the links inside the old starter area. */
 #next-steps ul {
   list-style: none;
   padding: 0;
@@ -153,6 +162,7 @@
   }
 }
 
+/* adds bottom spacing in the old starter layout. */
 #spacer {
   height: 88px;
   border-top: 1px solid var(--border);
@@ -161,6 +171,7 @@
   }
 }
 
+/* draws small border ticks in the old starter layout. */
 .ticks {
   position: relative;
   width: 100%;
@@ -183,15 +194,18 @@
   }
 }
 
+/* highlights low inventory values in the table. */
 .low-stock {
     background-color:#ffcbcf;
     font-weight: bold;
 }
 
+/* adds space above the transaction history panel. */
 .history-panel {
   margin-top: 24px;
 }
 
+/* lays out the history title and close button. */
 .history-header {
   display: flex;
   align-items: center;
@@ -199,16 +213,19 @@
   gap: 12px;
 }
 
+/* spaces the history filter area. */
 .history-controls {
   margin: 12px 0;
 }
 
+/* stacks the history filter label and input. */
 .history-controls label {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+/* lays out the stock movement form fields. */
 .stock-form {
   display: flex;
   flex-wrap: wrap;
@@ -217,22 +234,26 @@
   margin: 16px 0;
 }
 
+/* stacks labels and inputs in the stock form. */
 .stock-form label {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+/* colors positive stock changes green. */
 .transaction-positive {
   color: #0f7b0f;
   font-weight: 700;
 }
 
+/* colors negative stock changes red. */
 .transaction-negative {
   color: #b42318;
   font-weight: 700;
 }
 
+/* lays out the history page buttons. */
 .history-pagination {
   display: flex;
   align-items: center;
@@ -240,12 +261,14 @@
   margin-top: 12px;
 }
 
+/* lays out a saved note and its edit button. */
 .transaction-note-display {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+/* lays out the inline note editing controls. */
 .transaction-note-editor {
   display: flex;
   flex-wrap: wrap;
