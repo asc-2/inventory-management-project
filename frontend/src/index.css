@@ -1,17 +1,34 @@
 /* this file stores the global page styles and theme values. */
 /* it sets shared colors, fonts, spacing, and base element rules. */
 
-/* these root variables control the main light theme colors and fonts. */
+/* these root variables control the default day theme colors and fonts. */
 :root {
   --text: #6b6375;
   --text-h: #08060d;
-  --bg: #fff;
+  --bg: #fffdf8;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #b16a1f;
+  --accent-bg: rgba(177, 106, 31, 0.12);
+  --accent-border: rgba(177, 106, 31, 0.4);
   --social-bg: rgba(244, 243, 236, 0.5);
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-strong: rgba(255, 255, 255, 0.98);
+  --surface-muted: rgba(248, 245, 240, 0.72);
+  --surface-alt: rgba(244, 240, 233, 0.75);
+  --surface-row: rgba(248, 245, 240, 0.65);
+  --surface-row-hover: rgba(255, 249, 238, 0.9);
+  --surface-card-start: rgba(255, 255, 255, 0.92);
+  --surface-card-end: rgba(249, 247, 242, 0.92);
+  --surface-primary-start: rgba(255, 250, 241, 0.98);
+  --surface-primary-end: rgba(246, 239, 223, 0.98);
+  --surface-alert-start: rgba(255, 244, 246, 0.98);
+  --surface-alert-end: rgba(255, 233, 237, 0.98);
+  --message-surface: rgba(255, 255, 255, 0.72);
+  --input-border: rgba(109, 100, 119, 0.18);
+  --table-border: rgba(109, 100, 119, 0.12);
+  --button-secondary-start: #ffffff;
+  --button-secondary-end: #f2ece4;
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
@@ -34,35 +51,81 @@
   }
 }
 
-/* these values switch the global theme when dark mode is preferred. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* these values are used for the softer grey theme. */
+:root[data-theme="grey"] {
+  --text: #c9d0d8;
+  --text-h: #f3f6fa;
+  --bg: #2b3138;
+  --border: #46505b;
+  --code-bg: #3a424c;
+  --accent: #8ca4bc;
+  --accent-bg: rgba(140, 164, 188, 0.18);
+  --accent-border: rgba(140, 164, 188, 0.42);
+  --social-bg: rgba(77, 88, 100, 0.55);
+  --surface: rgba(56, 63, 72, 0.9);
+  --surface-strong: rgba(65, 73, 83, 0.98);
+  --surface-muted: rgba(63, 71, 81, 0.82);
+  --surface-alt: rgba(72, 81, 92, 0.82);
+  --surface-row: rgba(61, 69, 79, 0.78);
+  --surface-row-hover: rgba(78, 88, 100, 0.92);
+  --surface-card-start: rgba(63, 71, 81, 0.92);
+  --surface-card-end: rgba(53, 60, 69, 0.92);
+  --surface-primary-start: rgba(71, 80, 91, 0.96);
+  --surface-primary-end: rgba(58, 65, 74, 0.96);
+  --surface-alert-start: rgba(86, 58, 64, 0.95);
+  --surface-alert-end: rgba(71, 48, 53, 0.95);
+  --message-surface: rgba(63, 71, 81, 0.9);
+  --input-border: rgba(201, 208, 216, 0.16);
+  --table-border: rgba(201, 208, 216, 0.1);
+  --button-secondary-start: #505965;
+  --button-secondary-end: #3e4650;
+  --shadow:
+    rgba(8, 10, 14, 0.3) 0 10px 15px -3px, rgba(8, 10, 14, 0.18) 0 4px 6px -2px;
+  color-scheme: dark;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* these values are used for the darker night theme. */
+:root[data-theme="night"] {
+  --text: #d3dbe7;
+  --text-h: #fbfdff;
+  --bg: #11151b;
+  --border: #2c3440;
+  --code-bg: #212833;
+  --accent: #9fc5ef;
+  --accent-bg: rgba(159, 197, 239, 0.16);
+  --accent-border: rgba(159, 197, 239, 0.46);
+  --social-bg: rgba(31, 38, 48, 0.74);
+  --surface: rgba(24, 29, 36, 0.9);
+  --surface-strong: rgba(32, 38, 47, 0.98);
+  --surface-muted: rgba(28, 34, 42, 0.86);
+  --surface-alt: rgba(37, 44, 54, 0.86);
+  --surface-row: rgba(26, 32, 40, 0.82);
+  --surface-row-hover: rgba(37, 45, 55, 0.96);
+  --surface-card-start: rgba(28, 34, 42, 0.94);
+  --surface-card-end: rgba(20, 25, 32, 0.94);
+  --surface-primary-start: rgba(34, 41, 50, 0.98);
+  --surface-primary-end: rgba(23, 29, 36, 0.98);
+  --surface-alert-start: rgba(72, 34, 44, 0.96);
+  --surface-alert-end: rgba(56, 26, 35, 0.96);
+  --message-surface: rgba(27, 33, 41, 0.92);
+  --input-border: rgba(211, 219, 231, 0.14);
+  --table-border: rgba(211, 219, 231, 0.08);
+  --button-secondary-start: #3d4754;
+  --button-secondary-end: #2c3440;
+  --shadow:
+    rgba(0, 0, 0, 0.42) 0 10px 15px -3px, rgba(0, 0, 0, 0.28) 0 4px 6px -2px;
+  color-scheme: dark;
 }
 
 /* this removes the browser default page margin. */
 body {
   margin: 0;
+  background: var(--bg);
 }
 
 /* this sizes and centers the main react app container. */
 #root {
-  width: 1126px;
+  width: min(1440px, calc(100% - 32px));
   max-width: 100%;
   margin: 0 auto;
   text-align: center;

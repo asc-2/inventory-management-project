@@ -20,7 +20,7 @@ function ItemForm({
 }) {
   return (
     // handles both adding new items and editing old ones.
-    <form onSubmit={onSubmit}>
+    <form className="inventory-form item-form" onSubmit={onSubmit}>
       <input
         placeholder="Name"
         value={name}
@@ -70,7 +70,7 @@ function ItemForm({
       {editingId && (
         <>
           {/* reminds the user that stock changes happen elsewhere. */}
-          <span>Quantity changes now use the stock movement form below.</span>
+          <span className="form-helper-text">Quantity changes now use the stock movement form below.</span>
           <button type="button" onClick={onCancelEdit}>
             Cancel Edit
           </button>

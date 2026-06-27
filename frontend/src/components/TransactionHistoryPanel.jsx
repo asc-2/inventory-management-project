@@ -37,7 +37,10 @@ function TransactionHistoryPanel({
     // wraps the whole history area on the page.
     <section className="history-panel">
       <div className="history-header">
-        <h2>Transaction History</h2>
+        <div>
+          <h2>Transaction History</h2>
+          <p>Review stock changes and record new movements here.</p>
+        </div>
 
         {selectedItem && (
           <button type="button" onClick={onClose}>
@@ -54,7 +57,7 @@ function TransactionHistoryPanel({
       {selectedItem && (
         <>
           {/* tells the user which item's history is being viewed. */}
-          <p>
+          <p className="history-selected-item">
             Showing history for <strong>{selectedItem.name}</strong> with current stock of{" "}
             <strong>{selectedItem.quantity}</strong>.
           </p>
@@ -138,7 +141,7 @@ function TransactionHistoryPanel({
           {!historyLoading && !historyError && transactions.length > 0 && (
             <>
               {/* shows the current page of transaction history. */}
-              <table border="1" cellPadding="8">
+              <table className="inventory-table transaction-table">
                 <thead>
                   <tr>
                     <th>When</th>

@@ -1,277 +1,348 @@
-/* stores styles used by the main jsx app and shared components. */
-/* includes old starter styles plus the inventory-specific table and panel styles. */
+/* stores the main inventory app styles used by the jsx screens. */
+/* focuses on layout, forms, tables, summary cards, and history tools. */
 
-/* styles the old starter counter button. */
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-}
-
-/* styles the old starter hero art. */
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-/* styles the old starter center section. */
-#center {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
-}
-
-/* styles the old starter next steps area. */
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
+.app-shell {
+  display: grid;
+  gap: 24px;
+  padding: 32px;
   text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
 }
 
-/* styles the left starter docs block. */
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-/* styles the links inside the old starter area. */
-#next-steps ul {
-  list-style: none;
-  padding: 0;
+.app-topbar {
   display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-/* adds bottom spacing in the old starter layout. */
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-/* draws small border ticks in the old starter layout. */
-.ticks {
-  position: relative;
-  width: 100%;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
-
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
-}
-
-/* highlights low inventory values in the table. */
-.low-stock {
-    background-color:#ffcbcf;
-    font-weight: bold;
-}
-
-/* adds space above the transaction history panel. */
-.history-panel {
-  margin-top: 24px;
-}
-
-/* lays out the history title and close button. */
-.history-header {
-  display: flex;
-  align-items: center;
+  align-items: end;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
 
-/* spaces the history filter area. */
-.history-controls {
-  margin: 12px 0;
+.app-title {
+  margin: 10;
 }
 
-/* stacks the history filter label and input. */
-.history-controls label {
+.theme-switcher {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  color: var(--text);
+  font-size: 14px;
 }
 
-/* lays out the stock movement form fields. */
-.stock-form {
+.app-message {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--message-surface);
+  box-shadow: var(--shadow);
+}
+
+.app-message-error {
+  color: #8b1e2d;
+  border-color: rgba(200, 68, 89, 0.25);
+  background: rgba(255, 236, 239, 0.9);
+}
+
+.app-message-loading {
+  color: var(--text-h);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.summary-card {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--surface-card-start), var(--surface-card-end));
+  box-shadow: var(--shadow);
+}
+
+.summary-card h2 {
+  margin-bottom: 12px;
+}
+
+.summary-card p + p,
+.summary-list li + li {
+  margin-top: 8px;
+}
+
+.summary-card-primary {
+  background: linear-gradient(180deg, var(--surface-primary-start), var(--surface-primary-end));
+}
+
+.summary-card-alert {
+  border-color: rgba(188, 60, 74, 0.22);
+  background: linear-gradient(180deg, var(--surface-alert-start), var(--surface-alert-end));
+}
+
+.summary-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.inventory-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.inventory-search-form {
+  align-items: end;
+}
+
+.item-form {
+  align-items: end;
+}
+
+.form-helper-text {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.inventory-form input,
+.inventory-form select,
+.theme-switcher select,
+.transaction-note-editor input {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.inventory-form input:focus,
+.inventory-form select:focus,
+.theme-switcher select:focus,
+.transaction-note-editor input:focus {
+  outline: none;
+  border-color: rgba(188, 109, 34, 0.55);
+  box-shadow: 0 0 0 4px rgba(231, 187, 103, 0.18);
+}
+
+.inventory-form input:disabled {
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: not-allowed;
+}
+
+button {
+  min-height: 44px;
+  padding: 11px 16px;
+  border: 1px solid rgba(52, 41, 24, 0.08);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2f2417, #1f170f);
+  color: #fffaf1;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 12px 26px rgba(31, 23, 15, 0.18);
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(31, 23, 15, 0.24);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+button[type="button"] {
+  background: linear-gradient(180deg, var(--button-secondary-start), var(--button-secondary-end));
+  color: var(--text-h);
+}
+
+.table-card,
+.history-panel {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.table-header h2,
+.history-header h2 {
+  margin-bottom: 4px;
+}
+
+.table-header p,
+.history-header p,
+.history-selected-item {
+  color: var(--text);
+}
+
+.inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+}
+
+.inventory-table th,
+.inventory-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--table-border);
+  vertical-align: middle;
+}
+
+.inventory-table th {
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-h);
+  background: var(--surface-alt);
+}
+
+.inventory-table th:not(:last-child) {
+  cursor: pointer;
+}
+
+.inventory-table tbody tr:nth-child(even) {
+  background: var(--surface-row);
+}
+
+.inventory-table tbody tr:hover {
+  background: var(--surface-row-hover);
+}
+
+.table-empty {
+  text-align: center;
+  color: var(--text);
+  padding: 28px 16px;
+}
+
+.table-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: end;
-  margin: 16px 0;
+  gap: 8px;
 }
 
-/* stacks labels and inputs in the stock form. */
+.table-actions button {
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.low-stock {
+  color: #8b1e2d;
+  font-weight: 700;
+  background: linear-gradient(180deg, var(--surface-alert-start), var(--surface-alert-end));
+  box-shadow: inset 0 0 0 1px rgba(200, 68, 89, 0.14);
+}
+
+.history-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.history-controls {
+  margin: 18px 0 12px;
+}
+
+.history-controls label,
 .stock-form label {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  font-size: 14px;
+  color: var(--text);
 }
 
-/* colors positive stock changes green. */
+.stock-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  align-items: end;
+  margin: 18px 0 20px;
+  padding: 18px;
+  border: 1px solid var(--table-border);
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.transaction-table {
+  margin-top: 8px;
+}
+
 .transaction-positive {
-  color: #0f7b0f;
+  color: #126b3e;
   font-weight: 700;
 }
 
-/* colors negative stock changes red. */
 .transaction-negative {
   color: #b42318;
   font-weight: 700;
 }
 
-/* lays out the history page buttons. */
+.transaction-note-display,
+.transaction-note-editor,
 .history-pagination {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-/* lays out a saved note and its edit button. */
-.transaction-note-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* lays out the inline note editing controls. */
-.transaction-note-editor {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+}
+
+.history-pagination {
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.history-pagination span {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    padding: 20px;
+    gap: 18px;
+  }
+
+  .app-topbar {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .table-header,
+  .history-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .inventory-table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .table-actions {
+    min-width: 180px;
+  }
 }

@@ -11,6 +11,8 @@ import TransactionHistoryPanel from "./components/TransactionHistoryPanel"
 const API_URL = "http://127.0.0.1:8000"
 const LOW_STOCK_THRESHOLD = 5
 const HISTORY_PAGE_SIZE = 5
+const THEME_STORAGE_KEY = "inventory-theme"
+const THEME_OPTIONS = ["day", "grey", "night"]
 const DEFAULT_MOVEMENT_REASONS = {
   stock_in: ["Restock", "Purchase", "Returned"],
   stock_out: ["Sale", "Returned", "Stolen/Broken"],
@@ -57,6 +59,10 @@ function App() {
   const [sortDirection, setSortDirection] = useState("asc")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [themeMode, setThemeMode] = useState(() => {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY)
+    return THEME_OPTIONS.includes(savedTheme) ? savedTheme : "day"
+  })
 
   // loads the current item list from the backend.
   const fetchItems = async () => {
@@ -101,6 +107,12 @@ function App() {
     fetchItems()
     fetchSupplierOptions()
   }, [])
+
+  // applies the selected theme to the page and saves it for later.
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode
+    localStorage.setItem(THEME_STORAGE_KEY, themeMode)
+  }, [themeMode])
 
   // loads one page of transaction history for the selected item.
   const fetchTransactions = async (item, options = {}) => {
@@ -642,13 +654,29 @@ function App() {
 
 
   return (
-    <div>
-      {/* this is the main page heading. */}
-      <h1>Inventory Management</h1>
+    <div className="app-shell">
+      <div className="app-topbar">
+        <div>
+          {/* this is the main page heading. */}
+          <h1 className="app-title">Inventory Management</h1>
+        </div>
+
+        <label className="theme-switcher">
+          <span>Theme</span>
+          <select
+            value={themeMode}
+            onChange={(event) => setThemeMode(event.target.value)}
+          >
+            <option value="day">Day</option>
+            <option value="grey">Grey</option>
+            <option value="night">Night</option>
+          </select>
+        </label>
+      </div>
 
       {/* these show general app messages near the top. */}
-      {error && <p>{error}</p>}
-      {loading && <p>Loading...</p>}
+      {error && <p className="app-message app-message-error">{error}</p>}
+      {loading && <p className="app-message app-message-loading">Loading...</p>}
 
       {/* this shows the dashboard summary sections. */}
       <InventorySummary

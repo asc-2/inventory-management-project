@@ -12,7 +12,7 @@ function SearchForm({
 }) {
   return (
     // searches by name and category.
-    <form onSubmit={onSubmit}>
+    <form className="inventory-form inventory-search-form" onSubmit={onSubmit}>
       <input
         placeholder="Search by name"
         value={searchName}
