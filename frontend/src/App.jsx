@@ -22,7 +22,9 @@ const DEFAULT_MOVEMENT_REASONS = {
 function App() {
   // these state values manage item data and supplier suggestions.
   const [items, setItems] = useState([])
+  const [itemNameOptions, setItemNameOptions] = useState([])
   const [supplierOptions, setSupplierOptions] = useState([])
+  const [categoryOptions, setCategoryOptions] = useState([])
 
   // these state values manage the selected item history panel.
   const [selectedItem, setSelectedItem] = useState(null)
@@ -102,10 +104,44 @@ function App() {
     }
   }
 
+  // loads unique item names for the search suggestion list.
+  const fetchItemNameOptions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/items/names`)
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch item names")
+      }
+
+      const data = await response.json()
+      setItemNameOptions(data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  // loads unique category names for the category suggestion lists.
+  const fetchCategoryOptions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/items/categories`)
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories")
+      }
+
+      const data = await response.json()
+      setCategoryOptions(data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   // runs once when the page first loads.
   useEffect(() => {
     fetchItems()
+    fetchItemNameOptions()
     fetchSupplierOptions()
+    fetchCategoryOptions()
   }, [])
 
   // applies the selected theme to the page and saves it for later.
@@ -180,7 +216,9 @@ function App() {
       }
 
       fetchItems()
+      fetchItemNameOptions()
       fetchSupplierOptions()
+      fetchCategoryOptions()
     } catch (error) {
       console.error(error)
       setError("Could not delete item.")
@@ -291,7 +329,9 @@ function App() {
 
       // refreshes the list and supplier suggestions.
       await fetchItems()
+      await fetchItemNameOptions()
       await fetchSupplierOptions()
+      await fetchCategoryOptions()
 
       if (selectedItem && selectedItem.id === editingId) {
         // refreshes history if the edited item is currently selected.
@@ -382,7 +422,9 @@ function App() {
 
       // refreshes the list, suggestions, and history panel.
       await fetchItems()
+      await fetchItemNameOptions()
       await fetchSupplierOptions()
+      await fetchCategoryOptions()
       await fetchTransactions(updatedSelectedItem, {
         page: 0,
         typeFilter: historyTypeFilter,
@@ -692,6 +734,8 @@ function App() {
       <SearchForm
         searchName={searchName}
         searchCategory={searchCategory}
+        itemNameOptions={itemNameOptions}
+        categoryOptions={categoryOptions}
         onSearchNameChange={setSearchName}
         onSearchCategoryChange={setSearchCategory}
         onSubmit={handleSearch}
@@ -706,6 +750,7 @@ function App() {
         category={category}
         supplier={supplier}
         editingId={editingId}
+        categoryOptions={categoryOptions}
         supplierOptions={supplierOptions}
         onNameChange={setName}
         onQuantityChange={setQuantity}

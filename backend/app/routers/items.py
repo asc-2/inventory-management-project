@@ -177,6 +177,30 @@ def get_suppliers(db: Session = Depends(get_db)):
 
     return [supplier for supplier, in suppliers if supplier]
 
+@router.get("/items/categories", response_model=list[str])
+def get_categories(db: Session = Depends(get_db)):
+    # this returns a unique list of category names for frontend suggestions.
+    categories = (
+        db.query(models.Item.category)
+        .distinct()
+        .order_by(models.Item.category.asc())
+        .all()
+    )
+
+    return [category for category, in categories if category]
+
+@router.get("/items/names", response_model=list[str])
+def get_item_names(db: Session = Depends(get_db)):
+    # this returns a unique list of item names for frontend suggestions.
+    item_names = (
+        db.query(models.Item.name)
+        .distinct()
+        .order_by(models.Item.name.asc())
+        .all()
+    )
+
+    return [item_name for item_name, in item_names if item_name]
+
 @router.get("/items/{item_id}", response_model=schemas.ItemResponse)
 def get_item(item_id: int, db: Session = Depends(get_db)):
     # this returns one item by id.

@@ -5,6 +5,8 @@
 function SearchForm({
   searchName,
   searchCategory,
+  itemNameOptions,
+  categoryOptions,
   onSearchNameChange,
   onSearchCategoryChange,
   onSubmit,
@@ -17,13 +19,29 @@ function SearchForm({
         placeholder="Search by name"
         value={searchName}
         onChange={(event) => onSearchNameChange(event.target.value)}
+        list="search-name-options"
       />
 
       <input
         placeholder="Search by category"
         value={searchCategory}
         onChange={(event) => onSearchCategoryChange(event.target.value)}
+        list="search-category-options"
       />
+
+      <datalist id="search-name-options">
+        {/* lets the user type or pick an existing item name. */}
+        {itemNameOptions.map((itemNameOption) => (
+          <option key={itemNameOption} value={itemNameOption} />
+        ))}
+      </datalist>
+
+      <datalist id="search-category-options">
+        {/* lets the user type or pick an existing category. */}
+        {categoryOptions.map((categoryOption) => (
+          <option key={categoryOption} value={categoryOption} />
+        ))}
+      </datalist>
 
       <button type="submit">Search</button>
       <button type="button" onClick={onClear}>Clear</button>

@@ -125,6 +125,18 @@
   font: inherit;
 }
 
+.stock-form input,
+.stock-form select {
+  min-height: 30px;
+  padding: 14px 16px;
+}
+
+.transaction-note-editor input {
+  min-height: 30px;
+  min-width: 240px;
+  padding: 14px 16px;
+}
+
 .inventory-form input:focus,
 .inventory-form select:focus,
 .theme-switcher select:focus,
@@ -245,7 +257,28 @@ button[type="button"] {
 
 .table-actions button {
   min-height: 38px;
-  padding: 8px 12px;
+  padding: 7px 12px;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.table-actions button:hover {
+  box-shadow: none;
+}
+
+.transaction-note-display button,
+.transaction-note-editor button,
+.history-pagination button {
+  min-height: 36px;
+  padding: 7px 12px;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.transaction-note-display button:hover,
+.transaction-note-editor button:hover,
+.history-pagination button:hover {
+  box-shadow: none;
 }
 
 .low-stock {

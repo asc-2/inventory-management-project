@@ -9,6 +9,7 @@ function ItemForm({
   category,
   supplier,
   editingId,
+  categoryOptions,
   supplierOptions,
   onNameChange,
   onQuantityChange,
@@ -47,7 +48,15 @@ function ItemForm({
         placeholder="Category"
         value={category}
         onChange={(event) => onCategoryChange(event.target.value)}
+        list="category-options"
       />
+
+      <datalist id="category-options">
+        {/* lets users pick or type a category name. */}
+        {categoryOptions.map((categoryOption) => (
+          <option key={categoryOption} value={categoryOption} />
+        ))}
+      </datalist>
 
       <input
         placeholder="Supplier"
